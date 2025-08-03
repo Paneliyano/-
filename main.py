@@ -16,7 +16,7 @@ logging.basicConfig(
 # مشخصات
 BOT_TOKEN = "7806713370:AAFKYhXskmj5g_uASsD0EFXIpp7trlnUX6k"
 ADMIN_ID = 5065547877
-SUPPORT = "@amo_pourya"
+SUPPORT = "@amo_pouria"
 
 # استیکر خوشگل 🍬
 STICKER_ID = "CAACAgUAAxkBAAEZdc1mZoXtNiUVJOU3Ka3cZKBi2PHyCwACVwoAAhdHcVURsMeYobJibzAE"
