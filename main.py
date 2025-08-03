@@ -1,80 +1,59 @@
 
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputSticker
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# تنظیم لاگ
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# لاگ برای بررسی خطاها
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
-# توکن ربات
-BOT_TOKEN = "7806713370:AAFKYhXskmj5g_uASsD0EFXIpp7trlnUX6k"
+# اطلاعات شما
+BOT_TOKEN = "7806713370:AAE4BcVS9XICvAvjQ0Iod9BBT2JLJ4QOkTU"
+SUPPORT_USERNAME = "@Amo_pouria"
+SUPPORT_ID = 5065547877  # آیدی عددی
 
-# آیدی عددی پشتیبانی
-ADMIN_ID = 5065547877
+# استیکر شکلات (پیشنهادی: جایگزین کن با استیکر دلخواه خودت)
+STICKER_ID = "CAACAgQAAxkBAAEBG3lgZKRKNrxAvJt3pckMlMOUWYPm4AACRgoAAuAg4VY8NPB-cV1YiDAE"  # شکلات
 
-# تابع استارت
+# پیام خوش‌آمد و پرداخت
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🍫 پلن تک‌کاربره 1 ماهه - 80", callback_data="plan1")],
-        [InlineKeyboardButton("🍫 پلن دوکاربره 1 ماهه - 120", callback_data="plan2")],
-        [InlineKeyboardButton("🍫 پلن عمده (نمایندگی)", callback_data="reseller")],
-        [InlineKeyboardButton("🧑‍💼 ارسال پیام به پشتیبانی", callback_data="contact_support")]
+        [InlineKeyboardButton("🍫 پلن تک کاربره - 1 ماهه - 80 تومان", callback_data="plan1")],
+        [InlineKeyboardButton("🍬 پلن دو کاربره - 1 ماهه - 120 تومان", callback_data="plan2")],
+        [InlineKeyboardButton("📦 پلن عمده / نمایندگی", callback_data="reseller")],
+        [InlineKeyboardButton("🆘 ارتباط با پشتیبانی", callback_data="support")]
     ]
     await update.message.reply_text(
-        "سلام خوش اومدی به پنلیانو 🌟\n\n"
-        "فعلاً چون درگاه پرداخت مشکل داره، مبلغ پلن رو به شماره کارت زیر واریز کن و رسید رو ارسال کن:\n\n"
-        "💳 شماره کارت: 6219 8619 2805 6588\n"
-        "👤 بنام پوریا خسروی (بانک سامان)\n\n"
-        "✅ بعد از واریز، رسید رو اینجا بفرست تا بررسی بشه.",
-        parse_mode="Markdown",
+        "سلام رفیق خوش اومدی 🌟\n\n"
+        "فعلاً درگاه نداریم، لطفاً مبلغ رو به کارت زیر واریز کن و رسیدش رو برامون بفرست:\n\n"
+        "💳 6219 8619 2805 6588\n"
+        "به نام پوریا خسروی - بانک سامان\n\n"
+        "سرویس تست هم بخوای بگو، داریم 🍭",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-# هندل دکمه‌ها
+# دکمه‌ها
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "contact_support":
-        await query.message.reply_text("لطفاً پیام یا سوالت رو همین‌جا بنویس تا برای پشتیبان ارسال بشه.")
-        return
+    if query.data in ["plan1", "plan2", "reseller"]:
+        await query.message.reply_sticker(STICKER_ID)
+        await query.message.reply_text("فعلاً در حال ساخت پنل هستیم 🍬 تا آماده بشه این شکلات مال تو 😄")
 
-    # برای بقیه دکمه‌ها
-    sticker = "CAACAgUAAxkBAAIBD2YvLWi6i_1sGNNNdOwoV_yOiyBEAAJGAAPtDl9Tihgf2szdWjsZBA"
-    await query.message.reply_sticker(sticker)
-    await query.edit_message_text(
-        "این پلن فعلاً در دست احداثه 👷‍♂️\nبه زودی فعال میشه، صبور باش 🌟"
-    )
-
-# هندل پیام رسید یا پیام پشتیبانی
-async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.message.from_user
-
-    if update.message.photo or update.message.document:
+    elif query.data == "support":
         await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"📥 رسید جدید از @{user.username or user.first_name} (ID: {user.id})"
+            chat_id=SUPPORT_ID,
+            text=f"🔔 یه نفر نیاز به پشتیبانی داره: @{query.from_user.username or 'بدون نام کاربری'}"
         )
-        await context.bot.forward_message(
-            chat_id=ADMIN_ID,
-            from_chat_id=update.message.chat_id,
-            message_id=update.message.message_id
-        )
-        await update.message.reply_text("✅ رسیدت ثبت شد، بررسی می‌کنیم و خبرت می‌کنیم.")
-    elif update.message.text:
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"📩 پیام متنی از @{user.username or user.first_name} (ID: {user.id}):\n\n{update.message.text}"
-        )
-        await update.message.reply_text("✅ پیام به پشتیبان ارسال شد.")
-    else:
-        await update.message.reply_text("لطفاً رسید رو به صورت عکس یا فایل بفرست 🌟")
+        await query.message.reply_text("پیام شما به پشتیبانی ارسال شد ✅")
 
-# اجرای اصلی
-if name == "__main__":
+# اجرای ربات
+if name == '__main__':
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(MessageHandler(filters.ALL, handle_user_message))
     print("✅ ربات در حال اجراست...")
     app.run_polling()
