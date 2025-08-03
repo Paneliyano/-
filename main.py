@@ -17,7 +17,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🍫 پلن تک‌کاربره 1 ماهه - 80", callback_data="plan1")],
         [InlineKeyboardButton("🍫 پلن دوکاربره 1 ماهه - 120", callback_data="plan2")],
         [InlineKeyboardButton("🍫 پلن عمده (نمایندگی)", callback_data="reseller")],
-        [InlineKeyboardButton("🧑‍💼 ارتباط با پشتیبانی", url="https://t.me/Amo_pouria")]
+        [InlineKeyboardButton("🧑‍💼 ارسال پیام به پشتیبانی", callback_data="contact_support")]
     ]
     await update.message.reply_text(
         "سلام خوش اومدی به پنلیانو 🌟\n\n"
@@ -33,17 +33,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+
+    if query.data == "contact_support":
+        await query.message.reply_text("لطفاً پیام یا سوالت رو همین‌جا بنویس تا برای پشتیبان ارسال بشه.")
+        return
+
+    # برای بقیه دکمه‌ها
     sticker = "CAACAgUAAxkBAAIBD2YvLWi6i_1sGNNNdOwoV_yOiyBEAAJGAAPtDl9Tihgf2szdWjsZBA"
-
     await query.message.reply_sticker(sticker)
-
     await query.edit_message_text(
         "این پلن فعلاً در دست احداثه 👷‍♂️\nبه زودی فعال میشه، صبور باش 🌟"
     )
 
-# هندل پیام رسید و ارسال برای ادمین
-async def handle_receipt(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# هندل پیام رسید یا پیام پشتیبانی
+async def handle_user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.message.from_user
+
     if update.message.photo or update.message.document:
         await context.bot.send_message(
             chat_id=ADMIN_ID,
@@ -55,6 +60,12 @@ async def handle_receipt(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message_id=update.message.message_id
         )
         await update.message.reply_text("✅ رسیدت ثبت شد، بررسی می‌کنیم و خبرت می‌کنیم.")
+    elif update.message.text:
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"📩 پیام متنی از @{user.username or user.first_name} (ID: {user.id}):\n\n{update.message.text}"
+        )
+        await update.message.reply_text("✅ پیام به پشتیبان ارسال شد.")
     else:
         await update.message.reply_text("لطفاً رسید رو به صورت عکس یا فایل بفرست 🌟")
 
@@ -63,6 +74,6 @@ if name == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(MessageHandler(filters.ALL, handle_receipt))
+    app.add_handler(MessageHandler(filters.ALL, handle_user_message))
     print("✅ ربات در حال اجراست...")
     app.run_polling()
